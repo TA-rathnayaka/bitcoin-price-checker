@@ -9,7 +9,47 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
+  CoinData coinData = CoinData();
   String? selectedCurrency = 'USD';
+  Map<String, double>? prices = {};
+
+  List<Widget> getCryptoList() {
+    List<Widget> cryptoWidgets = [];
+    for (String crypto in cryptoList) {
+      cryptoWidgets.add(Padding(
+        padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
+        child: Card(
+          color: Colors.lightBlueAccent,
+          elevation: 5.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+            child: Text(
+              '1 $crypto = ${prices?[crypto] == null ? '?' : prices?[crypto]?.toStringAsFixed(2)} $selectedCurrency',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20.0,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ));
+    }
+    return cryptoWidgets;
+  }
+
+  void upDateUI() async {
+    Map<String, double> newPrices = {};
+    for (String crypto in cryptoList) {
+      newPrices[crypto] =
+          await coinData.getCoinData(crypto, selectedCurrency ?? "");
+
+    }
+    prices = newPrices;
+  }
 
   DropdownButton<String> getDropDownButton() {
     List<DropdownMenuItem<String>> dropDownItemsList = [];
@@ -26,6 +66,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
+          upDateUI();
         });
       },
     );
@@ -40,7 +81,10 @@ class _PriceScreenState extends State<PriceScreen> {
       backgroundColor: Colors.lightBlue,
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
-        print(selectedIndex);
+        setState(() {
+          selectedCurrency = currenciesList[selectedIndex];
+          upDateUI();
+        });
       },
       children: textItems,
     );
@@ -56,33 +100,17 @@ class _PriceScreenState extends State<PriceScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: getCryptoList(),
           ),
           Container(
-              height: 150.0,
-              alignment: Alignment.center,
-              padding: EdgeInsets.only(bottom: 30.0),
-              color: Colors.lightBlue,
-              child:Platform.isAndroid ? getDropDownButton() : getCupertinoPicker(),
+            height: 150.0,
+            alignment: Alignment.center,
+            padding: EdgeInsets.only(bottom: 30.0),
+            color: Colors.lightBlue,
+            child:
+                Platform.isAndroid ? getDropDownButton() : getCupertinoPicker(),
           ),
         ],
       ),
